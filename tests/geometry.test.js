@@ -1,9 +1,83 @@
-import test from 'node:test';import assert from 'node:assert/strict';
-import {destination,circleRing,insertVertex,restoreShapes,wrapLongitude,clampRadius,A} from '../dist/geometry.js';
-const rad=d=>d*Math.PI/180;
-test('eastward WGS84 equatorial geodesic uses ellipsoid radius',()=>{const p=destination({lat:0,lon:0},Math.PI/2,1000000);assert.ok(Math.abs(p.lon-1000000/A)<1e-10);assert.ok(Math.abs(p.lat)<1e-10);});
-test('zero distance preserves location and direct paths remain finite near poles',()=>{const p={lon:rad(-.1),lat:rad(51.5)};let q=destination(p,rad(37),0);assert.ok(Math.abs(q.lon-p.lon)<1e-12);assert.ok(Math.abs(q.lat-p.lat)<1e-12);for(const bearing of [0,1,2,3,4,5]){q=destination({lon:rad(170),lat:rad(89)},bearing,500000);assert.ok(Number.isFinite(q.lat)&&Number.isFinite(q.lon));assert.ok(Math.abs(q.lat)<=Math.PI/2);assert.ok(Math.abs(q.lon)<=Math.PI);}});
-test('dateline crossing wraps correctly',()=>{const p=destination({lon:rad(179),lat:0},Math.PI/2,1000000);assert.ok(p.lon<0);assert.ok(Math.abs(p.lon-wrapLongitude(rad(179)+1000000/A))<1e-10);});
-test('circle samples close as a ring without duplicating endpoint; moving centre retains radius',()=>{const s={center:{lon:0,lat:0},radius:500000};const before=circleRing(s);assert.equal(before.length,160);assert.notDeepEqual(before[0],before.at(-1));s.center={lon:1,lat:.5};assert.equal(s.radius,500000);assert.notDeepEqual(circleRing(s)[0],before[0]);});
-test('midpoint insertion on closing edge preserves winding and all original vertices',()=>{const v=[{lon:0,lat:0},{lon:1,lat:0},{lon:1,lat:1}],p={lon:.5,lat:.5};const next=insertVertex(v,2,p);assert.equal(next.length,4);assert.deepEqual(next,[...v,p]);assert.equal(v.length,3);const middle=insertVertex(v,0,p);assert.deepEqual(middle,[v[0],p,v[1],v[2]]);});
-test('saved geometry roundtrips and malformed state is discarded',()=>{const shapes=[{id:'a',type:'circle',center:{lon:0,lat:0},radius:100,bearing:1},{id:'b',type:'polygon',vertices:[{lon:0,lat:0},{lon:1,lat:0},{lon:1,lat:1}]}];assert.deepEqual(restoreShapes(JSON.parse(JSON.stringify({version:1,shapes}))),shapes);assert.deepEqual(restoreShapes({version:1,shapes:[null,{id:'c',type:'circle',center:{lon:Infinity,lat:0},radius:100}]}),[]);assert.equal(restoreShapes({version:1,shapes:[...shapes,shapes[0]]}).length,2);assert.deepEqual(restoreShapes({version:0,shapes}),[]);assert.equal(clampRadius(-1),10);assert.equal(clampRadius(1e9),5000000);});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  destination,
+  circleRing,
+  insertVertex,
+  restoreShapes,
+  wrapLongitude,
+  clampRadius,
+  A,
+} from '../dist/geometry.js';
+const rad = (d) => (d * Math.PI) / 180;
+test('eastward WGS84 equatorial geodesic uses ellipsoid radius', () => {
+  const p = destination({ lat: 0, lon: 0 }, Math.PI / 2, 1000000);
+  assert.ok(Math.abs(p.lon - 1000000 / A) < 1e-10);
+  assert.ok(Math.abs(p.lat) < 1e-10);
+});
+test('zero distance preserves location and direct paths remain finite near poles', () => {
+  const p = { lon: rad(-0.1), lat: rad(51.5) };
+  let q = destination(p, rad(37), 0);
+  assert.ok(Math.abs(q.lon - p.lon) < 1e-12);
+  assert.ok(Math.abs(q.lat - p.lat) < 1e-12);
+  for (const bearing of [0, 1, 2, 3, 4, 5]) {
+    q = destination({ lon: rad(170), lat: rad(89) }, bearing, 500000);
+    assert.ok(Number.isFinite(q.lat) && Number.isFinite(q.lon));
+    assert.ok(Math.abs(q.lat) <= Math.PI / 2);
+    assert.ok(Math.abs(q.lon) <= Math.PI);
+  }
+});
+test('dateline crossing wraps correctly', () => {
+  const p = destination({ lon: rad(179), lat: 0 }, Math.PI / 2, 1000000);
+  assert.ok(p.lon < 0);
+  assert.ok(Math.abs(p.lon - wrapLongitude(rad(179) + 1000000 / A)) < 1e-10);
+});
+test('circle samples close as a ring without duplicating endpoint; moving centre retains radius', () => {
+  const s = { center: { lon: 0, lat: 0 }, radius: 500000 };
+  const before = circleRing(s);
+  assert.equal(before.length, 160);
+  assert.notDeepEqual(before[0], before.at(-1));
+  s.center = { lon: 1, lat: 0.5 };
+  assert.equal(s.radius, 500000);
+  assert.notDeepEqual(circleRing(s)[0], before[0]);
+});
+test('midpoint insertion on closing edge preserves winding and all original vertices', () => {
+  const v = [
+      { lon: 0, lat: 0 },
+      { lon: 1, lat: 0 },
+      { lon: 1, lat: 1 },
+    ],
+    p = { lon: 0.5, lat: 0.5 };
+  const next = insertVertex(v, 2, p);
+  assert.equal(next.length, 4);
+  assert.deepEqual(next, [...v, p]);
+  assert.equal(v.length, 3);
+  const middle = insertVertex(v, 0, p);
+  assert.deepEqual(middle, [v[0], p, v[1], v[2]]);
+});
+test('saved geometry roundtrips and malformed state is discarded', () => {
+  const shapes = [
+    { id: 'a', type: 'circle', center: { lon: 0, lat: 0 }, radius: 100, bearing: 1 },
+    {
+      id: 'b',
+      type: 'polygon',
+      vertices: [
+        { lon: 0, lat: 0 },
+        { lon: 1, lat: 0 },
+        { lon: 1, lat: 1 },
+      ],
+    },
+  ];
+  assert.deepEqual(restoreShapes(JSON.parse(JSON.stringify({ version: 1, shapes }))), shapes);
+  assert.deepEqual(
+    restoreShapes({
+      version: 1,
+      shapes: [null, { id: 'c', type: 'circle', center: { lon: Infinity, lat: 0 }, radius: 100 }],
+    }),
+    [],
+  );
+  assert.equal(restoreShapes({ version: 1, shapes: [...shapes, shapes[0]] }).length, 2);
+  assert.deepEqual(restoreShapes({ version: 0, shapes }), []);
+  assert.equal(clampRadius(-1), 10);
+  assert.equal(clampRadius(1e9), 5000000);
+});

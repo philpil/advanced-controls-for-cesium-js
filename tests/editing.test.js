@@ -141,6 +141,8 @@ function harness(hitKind = 'shape') {
     suppressUntil: 0,
     performance: { now: () => 1000 },
     closeSelectionMenu() {},
+    closeShapeList() {},
+    toggleShapeList() {},
     selectedShape: () => polygon,
     pickAll: () => [
       { kind: 'shape', id: 'b' },

@@ -99,9 +99,19 @@
       <div class="status">
         <span id="coordinates">WGS 84</span>
         <span class="separator">/</span>
-        <span id="shapeCount">0 SHAPES</span>
+        <button
+          id="shapeCount"
+          type="button"
+          aria-expanded="false"
+          aria-controls="shapeList"
+          aria-haspopup="menu"
+          title="Browse shapes and fly to one"
+        >
+          0 SHAPES
+        </button>
       </div>
     </footer>
+    <div id="shapeList" role="menu" aria-label="All shapes — choose one to fly to" hidden></div>
     <div id="selectionMenu" role="menu" aria-label="Choose overlapping shape" hidden></div>
     <div id="toast" role="status" aria-live="polite"></div>
     <div id="loading">
@@ -129,8 +139,8 @@
         <dt>Navigate & manage</dt>
         <dd>
           Drag empty globe to orbit. Scroll or pinch to zoom. V selects, C draws a circle, P draws a
-          polygon. Escape cancels drawing or deselects. Delete removes the selected shape. Drawings
-          save on this browser.
+          polygon. Escape cancels drawing or deselects. Delete removes the selected shape. Click the
+          shape count to browse all completed shapes and fly to one. Drawings save on this browser.
         </dd>
       </dl>
       <div class="attribution">

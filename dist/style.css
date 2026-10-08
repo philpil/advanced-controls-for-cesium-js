@@ -537,7 +537,8 @@ dialog dd {
     transition: none !important;
   }
 }
-#selectionMenu {
+#selectionMenu,
+#shapeList {
   position: fixed;
   z-index: 8;
   width: 238px;
@@ -557,7 +558,8 @@ dialog dd {
   font-size: 10px;
   letter-spacing: 0.5px;
 }
-#selectionMenu button {
+#selectionMenu button,
+#shapeList button {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -570,15 +572,57 @@ dialog dd {
   padding: 11px 10px;
   font-size: 12px;
 }
-#selectionMenu button[aria-checked='true'] {
+#selectionMenu button[aria-checked='true'],
+#shapeList button[aria-current='true'] {
   background: #adf0d013;
   color: var(--accent);
 }
-#selectionMenu button small {
+#selectionMenu button small,
+#shapeList button small {
   font-size: 9px;
   color: var(--muted);
 }
-#selectionMenu button:focus-visible {
+#selectionMenu button:focus-visible,
+#shapeList button:focus-visible {
   outline-offset: -2px;
   background: #adf0d01a;
+}
+
+#shapeCount {
+  pointer-events: auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--accent);
+  font: inherit;
+  letter-spacing: inherit;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+#shapeCount::after {
+  content: ' ▴';
+}
+#shapeCount[aria-expanded='true']::after {
+  content: ' ▾';
+}
+.status {
+  align-items: center;
+}
+#shapeList {
+  right: 32px;
+  bottom: max(82px, calc(env(safe-area-inset-bottom) + 64px));
+  width: 270px;
+  max-height: min(380px, calc(100dvh - 180px));
+  overscroll-behavior: contain;
+}
+#shapeList button {
+  min-height: 52px;
+}
+@media (max-width: 720px) {
+  #shapeList {
+    right: 18px;
+  }
+  footer .status {
+    justify-content: flex-end;
+  }
 }

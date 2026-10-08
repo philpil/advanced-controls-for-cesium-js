@@ -226,6 +226,119 @@ function chooseAt(position, event) {
 }
 
 /**
+ * Closes the shape browser and optionally returns keyboard focus to its toggle.
+ * @param {boolean} [restoreFocus=false] Use when dismissing with Escape.
+ * @returns {void}
+ */
+function closeShapeList(restoreFocus = false) {
+  getElement('shapeList').hidden = true;
+  getElement('shapeCount').setAttribute('aria-expanded', 'false');
+  if (restoreFocus) getElement('shapeCount').focus({ preventScroll: true });
+}
+
+/**
+ * Rebuilds the list from completed records; labels match the inspector.
+ * Text nodes keep persisted values out of HTML. Native buttons support touch and keyboard.
+ * @returns {void}
+ */
+function renderShapeList() {
+  const list = getElement('shapeList');
+  list.replaceChildren();
+  const heading = document.createElement('div');
+  heading.className = 'menu-heading';
+  heading.textContent = shapes.length
+    ? 'YOUR SHAPES · SELECT TO FLY'
+    : 'No shapes yet. Draw a circle or polygon.';
+  list.append(heading);
+  for (const [index, shape] of shapes.entries()) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('role', 'menuitem');
+    if (shape.id === selected) button.setAttribute('aria-current', 'true');
+    const name = document.createElement('span');
+    name.textContent = `${shape.type === 'circle' ? 'Circle' : 'Polygon'} ${String(index + 1).padStart(2, '0')}`;
+    const detail = document.createElement('small');
+    detail.textContent =
+      shape.type === 'circle'
+        ? `${(shape.radius / 1000).toLocaleString(undefined, { maximumFractionDigits: 3 })} km radius`
+        : `${shape.vertices.length} vertices`;
+    button.append(name, detail);
+    button.onclick = () => flyToShape(shape.id);
+    list.append(button);
+  }
+}
+
+/**
+ * Opens the bottom-right browser without changing an unfinished drawing.
+ * @returns {void}
+ */
+function toggleShapeList() {
+  const list = getElement('shapeList');
+  if (!list.hidden) return closeShapeList();
+  closeSelectionMenu();
+  renderShapeList();
+  list.hidden = false;
+  getElement('shapeCount').setAttribute('aria-expanded', 'true');
+  list.querySelector('button')?.focus({ preventScroll: true });
+}
+
+/**
+ * Builds a padded Earth-fixed bounding sphere from the shape's surface outline.
+ * Geodesic edge samples include curved-edge extrema rather than just vertices.
+ * Cartesian bounds avoid longitude discontinuities at the date line and poles.
+ * The centre is projected onto WGS 84 so a top-down flight targets the surface.
+ * @param {Shape} shape Completed circle or polygon.
+ * @returns {Cesium.BoundingSphere} Metre-based camera target, with a minimum size for tiny shapes.
+ */
+function shapeFlightBounds(shape) {
+  const boundary = shape.type === 'circle' ? circleRing(shape) : [...shape.vertices];
+  if (shape.type === 'polygon') {
+    for (let i = 0; i < shape.vertices.length; i++) {
+      const start = shape.vertices[i];
+      const end = shape.vertices[(i + 1) % shape.vertices.length];
+      const edge = geodesic(start, end);
+      const steps = Math.max(1, Math.ceil(edge.surfaceDistance / 200000));
+      for (let j = 1; j < steps; j++) {
+        const point = edge.interpolateUsingFraction(j / steps);
+        boundary.push({ lon: point.longitude, lat: point.latitude });
+      }
+    }
+  }
+  const points = boundary.map(toCartesian);
+  const bounds = Cesium.BoundingSphere.fromPoints(points);
+  bounds.center = Cesium.Ellipsoid.WGS84.scaleToGeodeticSurface(bounds.center) || points[0];
+  const radius = Math.max(...points.map((p) => Cesium.Cartesian3.distance(bounds.center, p)));
+  bounds.radius = Math.max(80, radius * 1.4);
+  return bounds;
+}
+
+/**
+ * Selects a saved shape and flies to a north-up, top-down view of its entire outline.
+ * Cesium computes range from the bounding sphere and current viewport aspect ratio.
+ * Existing drafts are protected; reduced-motion users receive an immediate view change.
+ * @param {string} id Persistent shape ID.
+ * @returns {void}
+ */
+function flyToShape(id) {
+  const shape = shapes.find((item) => item.id === id);
+  if (!shape) return;
+  if (draft) {
+    toast('Finish or cancel your polygon before flying to another shape.');
+    return;
+  }
+  const bounds = shapeFlightBounds(shape);
+  closeShapeList();
+  setMode('select');
+  select(id);
+  viewer.camera.cancelFlight();
+  viewer.camera.flyToBoundingSphere(bounds, {
+    duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.5,
+    offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, 0),
+  });
+  viewer.canvas.focus({ preventScroll: true });
+}
+
+/**
  * Creates an entity and registers its application metadata for picking.
  * @param {Object} options Cesium Entity constructor options.
  * @param {PickMetadata} data Editing metadata, kept outside persisted shape records.
@@ -464,6 +577,7 @@ function updateUI() {
  * @returns {void}
  */
 function select(id) {
+  closeShapeList();
   closeSelectionMenu();
   const old = selected;
   selected = id;
@@ -717,6 +831,11 @@ function bind() {
     'pointerdown',
     (e) => {
       if (!getElement('selectionMenu').contains(e.target)) closeSelectionMenu();
+      if (
+        !getElement('shapeList').contains(e.target) &&
+        !getElement('shapeCount').contains(e.target)
+      )
+        closeShapeList();
     },
     true,
   );
@@ -738,6 +857,39 @@ function bind() {
             : (i + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
       buttons[next]?.focus();
     }
+  });
+  getElement('shapeCount').onclick = toggleShapeList;
+  getElement('shapeCount').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !getElement('shapeList').hidden) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeShapeList(true);
+    }
+  });
+  getElement('shapeList').addEventListener('keydown', (e) => {
+    const buttons = [...getElement('shapeList').querySelectorAll('button')];
+    const index = buttons.indexOf(document.activeElement);
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      closeShapeList(true);
+    } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+      e.preventDefault();
+      const next =
+        e.key === 'Home'
+          ? 0
+          : e.key === 'End'
+            ? buttons.length - 1
+            : (index + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+      buttons[next]?.focus();
+    }
+  });
+  getElement('shapeList').addEventListener('focusout', (e) => {
+    if (
+      !getElement('shapeList').contains(e.relatedTarget) &&
+      e.relatedTarget !== getElement('shapeCount')
+    )
+      closeShapeList();
   });
   addEventListener('resize', closeSelectionMenu);
   viewer.camera.moveStart.addEventListener(closeSelectionMenu);
@@ -827,7 +979,8 @@ function bind() {
     if (
       ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) ||
       getElement('about').open ||
-      !getElement('selectionMenu').hidden
+      !getElement('selectionMenu').hidden ||
+      !getElement('shapeList').hidden
     )
       return;
     const k = e.key.toLowerCase();

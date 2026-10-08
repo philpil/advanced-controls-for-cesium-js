@@ -20,6 +20,8 @@ Select a finished polygon to edit it. Drag the gold **MOVE** handle near its mid
 
 ## Navigation and state
 
+Click the bottom-right **shape count** to browse all completed circles and polygons. Each entry shows its radius or vertex count. Choose one to select it and fly to a padded, top-down view sized to its outline. Bounds include samples along geodesic edges and use Earth-fixed coordinates for dateline/pole support. Tiny shapes use a minimum camera distance. Arrow keys navigate the list; Escape or clicking outside closes it. Reduced-motion preferences disable the flight animation. Finish or cancel an unfinished polygon before flying elsewhere.
+
 Drag empty globe to orbit, scroll or pinch to zoom. Camera inputs pause during handle drags and recover on release, cancellation or loss of focus. V = select, C = circle, P = polygon; Delete/Backspace removes the selected shape. There are no default Cesium navigation widgets, timeline, animation controls, stars, Sun, Moon or atmosphere. Credits and help are accessible using the custom `?` button.
 
 Completed shapes save automatically to localStorage (`cesium-advanced-controls-v1`). Unfinished polygons are not persisted. Saves belong to the current browser and origin; clearing site data removes them. Delete shape persists immediately. No data is sent to an application backend.

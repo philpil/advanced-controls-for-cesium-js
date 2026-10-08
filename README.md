@@ -16,7 +16,7 @@ Circles are sampled using Vincenty's WGS 84 direct geodesic; resizing uses Cesiu
 
 Choose **Polygon** and click to add vertices. A filled interior appears once three points exist. Double-click to add the final vertex and close the polygon; the double-click's second click is ignored. Enter or **Finish polygon** also closes it, useful on touch devices. **Undo point** removes the last drawing point; Escape cancels unfinished drawing.
 
-Select a finished polygon to edit it. Drag any solid vertex handle. Click a hollow midpoint handle to insert a vertex there, including along the closing edge. The new vertex can immediately be dragged. Midpoints are interpolated along WGS 84 geodesics, not averaged longitude/latitude values. Simple polygons smaller than a hemisphere are the intended scope; self-intersections and holes are not supported. Avoid antipodal edges. Up to 500 vertices per polygon and 200 shapes are retained.
+Select a finished polygon to edit it. Drag its filled interior or outline to move the entire polygon, including immediately after finishing it. All vertices rotate together over the globe and are projected onto WGS 84, avoiding longitude wrapping or pole stretching; angular shape is preserved, while ellipsoidal metre lengths may vary slightly with latitude. Vertex handles remain independently draggable. Drag any solid vertex handle. Click a hollow midpoint handle to insert a vertex there, including along the closing edge. The new vertex can immediately be dragged. Midpoints are interpolated along WGS 84 geodesics, not averaged longitude/latitude values. Simple polygons smaller than a hemisphere are the intended scope; self-intersections and holes are not supported. Avoid antipodal edges. Up to 500 vertices per polygon and 200 shapes are retained.
 
 ## Navigation and state
 
@@ -40,3 +40,7 @@ Natural Earth II is a low-resolution global basemap: zooming does not reveal str
 ## Credits
 
 [CesiumJS](https://cesium.com/platform/cesiumjs/) is Apache-2.0 licensed; its distribution retains its licence and notices. [Natural Earth](https://www.naturalearthdata.com/) imagery is public domain. These are linked from the in-app help panel. No Cesium ion or third-party satellite imagery is used.
+
+## Overlap selection
+
+Click where two or more shapes overlap to open a compact chooser containing each shape once (its fill and outline do not create duplicate entries). The chooser shows circle radius or polygon vertex count and marks the current selection. Choose the shape you want; Escape or clicking outside dismisses it. Arrow keys navigate the menu. A simple click inside an already-selected polygon still opens this menu; moving more than five screen pixels instead drags the selected polygon. Handles take priority over whole-shape dragging.

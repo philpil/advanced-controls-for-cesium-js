@@ -18,3 +18,20 @@ export function circleRing(shape,count=160){return Array.from({length:count},(_,
 export function insertVertex(vertices,edge,point){const result=vertices.map(p=>({...p}));result.splice(edge+1,0,{...point});return result;}
 export function validPoint(p){return p&&Number.isFinite(p.lon)&&Number.isFinite(p.lat)&&Math.abs(p.lon)<=Math.PI&&Math.abs(p.lat)<=Math.PI/2;}
 export function restoreShapes(raw){if(!raw||raw.version!==1||!Array.isArray(raw.shapes))return[];const ids=new Set();return raw.shapes.slice(0,200).filter(s=>{if(!s||typeof s.id!=='string'||ids.has(s.id))return false;const okay=s.type==='circle'?validPoint(s.center)&&Number.isFinite(s.radius)&&s.radius>=MIN_RADIUS&&s.radius<=MAX_RADIUS:s.type==='polygon'&&Array.isArray(s.vertices)&&s.vertices.length>=3&&s.vertices.length<=500&&s.vertices.every(validPoint);if(okay)ids.add(s.id);return okay;}).map(s=>s.type==='circle'?{id:s.id,type:s.type,center:{...s.center},radius:s.radius,bearing:Number.isFinite(s.bearing)?s.bearing:Math.PI/2}:{id:s.id,type:s.type,vertices:s.vertices.map(p=>({...p}))});}
+
+// Rotate geodetic unit directions together, then project back to WGS84 at height 0.
+// Unlike adding lon/lat offsets, this stays well-behaved at poles and the dateline.
+const unit=p=>[Math.cos(p.lat)*Math.cos(p.lon),Math.cos(p.lat)*Math.sin(p.lon),Math.sin(p.lat)];
+const dot=(a,b)=>a.reduce((sum,x,i)=>sum+x*b[i],0);
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+export function rotatePolygon(vertices,from,to){
+ const a=unit(from),b=unit(to),v=cross(a,b),s=Math.hypot(...v),c=Math.max(-1,Math.min(1,dot(a,b)));
+ if(s<1e-12&&c>0)return vertices.map(p=>({...p}));
+ let axis=s<1e-12?cross(a,Math.abs(a[2])<.9?[0,0,1]:[1,0,0]):v;
+ const len=Math.hypot(...axis);axis=axis.map(x=>x/len);
+ return vertices.map(p=>{const u=unit(p),k=cross(axis,u),d=dot(axis,u);const r=u.map((x,i)=>x*c+k[i]*s+axis[i]*d*(1-c));return{lon:wrapLongitude(Math.atan2(r[1],r[0])),lat:Math.atan2(r[2],Math.hypot(r[0],r[1]))};});
+}
+export function selectionCandidates(hits,shapes){
+ const allowed=new Set(shapes.map(s=>s.id)),seen=new Set();
+ return hits.filter(h=>h&&allowed.has(h.id)&&!seen.has(h.id)&&(seen.add(h.id),true)).map(h=>h.id);
+}

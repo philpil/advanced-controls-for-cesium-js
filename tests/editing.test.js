@@ -137,6 +137,7 @@ function harness(hitKind = 'shape') {
     multiSelect: false,
     mergeSelected() {},
     bindMovablePanels: () => () => {},
+    bindViewControls() {},
     gesture: null,
     drag: null,
     selected: 'a',

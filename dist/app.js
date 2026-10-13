@@ -31,6 +31,7 @@ import {
 import { polygonProblem, mergeVertices } from './topology.js';
 import { createHistory } from './history.js';
 import { bindMovablePanels } from './panels.js';
+import { bindViewControls } from './views.js';
 let reflowPanels = () => {};
 const history = createHistory();
 const selectedIds = new Set();
@@ -160,7 +161,9 @@ function toScreenPosition(e) {
 function pickGlobePosition(p) {
   const ray = viewer.camera.getPickRay(p);
   if (!ray) return null;
-  const hit = viewer.scene.globe.pick(ray, viewer.scene);
+  const hit =
+    viewer.scene.globe.pick(ray, viewer.scene) ||
+    viewer.camera.pickEllipsoid(p, Cesium.Ellipsoid.WGS84);
   return hit ? toGeographic(hit) : null;
 }
 /**
@@ -484,7 +487,11 @@ function renderShape(s, isDraft = false) {
             showBackground: true,
             backgroundColor: Cesium.Color.fromCssColorString('#101b23').withAlpha(0.85),
             backgroundPadding: new Cesium.Cartesian2(8, 5),
-            pixelOffset: new Cesium.Cartesian2(0, -52),
+            // Anchor the bottom of the name at the actual surface point.
+            // A screen-space upward offset appears to float when the globe tilts.
+            pixelOffset: Cesium.Cartesian2.ZERO,
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
             disableDepthTestDistance: 0,
           },
@@ -547,7 +554,9 @@ function moveHandle(shape) {
         outlineColor: Cesium.Color.BLACK,
         outlineWidth: 3,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(0, -24),
+        pixelOffset: new Cesium.Cartesian2(-14, 0),
+        horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       },
     },
@@ -980,6 +989,34 @@ function handlePointerUp(e) {
  */
 function bind() {
   reflowPanels = bindMovablePanels(['inspector', 'multiSelection'].map(getElement));
+  bindViewControls({
+    scene: viewer.scene,
+    modes: Cesium.SceneMode,
+    buttons: {
+      globe: getElement('globeView'),
+      flat: getElement('flatView'),
+      tilted: getElement('tiltedView'),
+    },
+    beforeChange: () => {
+      if (draft) {
+        toast('Finish or cancel your polygon before changing view.');
+        return false;
+      }
+      stopDrag();
+      gesture = null;
+      suppressUntil = performance.now() + 150;
+      closeSelectionMenu();
+      closeShapeList();
+      viewer.camera.cancelFlight();
+      return true;
+    },
+    afterChange: () => {
+      renderHandles();
+      updateUI();
+      viewer.scene.requestRender();
+    },
+    notify: toast,
+  });
   const canvas = viewer.canvas;
   canvas.style.touchAction = 'none';
   canvas.tabIndex = 0;
@@ -1216,7 +1253,7 @@ async function init() {
     selectionIndicator: false,
     skyBox: false,
     skyAtmosphere: false,
-    scene3DOnly: true,
+    scene3DOnly: false,
     shouldAnimate: false,
     requestRenderMode: true,
     maximumRenderTimeChange: Infinity,

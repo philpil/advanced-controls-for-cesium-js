@@ -69,6 +69,20 @@
       <button id="undoEdit" disabled title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
       <button id="redoEdit" disabled title="Redo (Ctrl/Cmd+Shift+Z)">↷ Redo</button>
     </div>
+    <nav class="view-toolbar" aria-label="Map view">
+      <button id="globeView" type="button" aria-pressed="true" class="active" title="3D globe">
+        Globe
+      </button>
+      <button id="flatView" type="button" aria-pressed="false" title="Flat 2D map">Flat</button>
+      <button
+        id="tiltedView"
+        type="button"
+        aria-pressed="false"
+        title="Tilted flat map (Cesium Columbus View)"
+      >
+        2.5D
+      </button>
+    </nav>
     <aside id="inspector" hidden>
       <div class="eyebrow panel-header">
         <button
@@ -216,6 +230,12 @@
           polygon to move the entire shape around the globe. Drag its solid handles to edit; click
           hollow midpoint handles to insert a vertex. Click overlapping shapes to choose one from a
           popup menu.
+        </dd>
+        <dt>Views</dt>
+        <dd>
+          Globe shows the 3D Earth, Flat shows a 2D map, and 2.5D shows a tilted flat map. Shapes
+          and selections stay available across views. Finish or cancel a draft polygon before
+          switching.
         </dd>
         <dt>Navigate & manage</dt>
         <dd>

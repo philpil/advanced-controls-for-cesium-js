@@ -786,3 +786,42 @@ dialog dd {
 .panel-header .panel-grip {
   letter-spacing: 1px;
 }
+
+.view-toolbar {
+  position: fixed;
+  left: 205px;
+  top: 162px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  backdrop-filter: blur(18px);
+}
+.view-toolbar button {
+  min-height: 36px;
+  min-width: 64px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #abb3b7;
+  font-size: 11px;
+}
+.view-toolbar button.active {
+  background: #253c33;
+  color: var(--accent);
+}
+@media (max-width: 720px) {
+  .view-toolbar {
+    left: 18px;
+    top: 205px;
+  }
+  .view-toolbar button {
+    min-height: 44px;
+  }
+  #toast {
+    top: 266px;
+  }
+}

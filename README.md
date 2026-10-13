@@ -22,7 +22,7 @@ Select a finished polygon to edit it. Drag the gold **MOVE** handle near its mid
 
 Click the bottom-right **shape count** to browse all completed circles and polygons. Each entry shows its radius or vertex count. Choose one to select it and fly to a padded, top-down view sized to its outline. Bounds include samples along geodesic edges and use Earth-fixed coordinates for dateline/pole support. Tiny shapes use a minimum camera distance. Arrow keys navigate the list; Escape or clicking outside closes it. Reduced-motion preferences disable the flight animation. Finish or cancel an unfinished polygon before flying elsewhere.
 
-Drag empty globe to orbit, scroll or pinch to zoom. Camera inputs pause during handle drags and recover on release, cancellation or loss of focus. V = select, C = circle, P = polygon; Delete/Backspace removes the selected shape. There are no default Cesium navigation widgets, timeline, animation controls, stars, Sun, Moon or atmosphere. Credits and help are accessible using the custom `?` button.
+Drag empty globe to orbit, scroll or pinch to zoom. Camera inputs pause during handle drags and recover on release, cancellation or loss of focus. V = select, C = circle, P = polygon; Delete/Backspace removes the selected shape. Custom view buttons switch between Globe, Flat and 2.5D. There are no default Cesium navigation widgets, timeline, animation controls, stars, Sun, Moon or atmosphere. Credits and help are accessible using the custom `?` button.
 
 Names and completed shapes save automatically to localStorage (`cesium-advanced-controls-v1`). Unfinished polygons are not persisted. Saves belong to the current browser and origin; clearing site data removes them. Delete shape persists immediately. No data is sent to an application backend.
 
@@ -87,3 +87,9 @@ Use the **Undo / Redo** buttons, **Ctrl/Cmd+Z**, or **Ctrl/Cmd+Shift+Z** (**Ctrl
 Drag the grip/title at the top of the shape inspector or multi-selection panel to move it out of the way with a mouse or finger. Each panel retains its own position for the page session, including when changing selections. Fields, Rename, Merge, Delete and × remain normal controls. Panels stay inside the visible screen when dragged, resized or rotated; tall panels scroll internally. Keyboard users can focus the header grip and use arrow keys (16px steps), Shift+arrows (64px), or Home to return to the default responsive position.
 
 Use **−** in either panel header to minimise it to a draggable title bar, and **+** to restore it. Minimising leaves the selection and all active editing handles intact, so circles can still be moved/resized and polygon vertices or the gold MOVE handle remain editable. The minimise state is independent for each panel and lasts for the page session. **×** still clears the selection.
+
+## Globe, Flat and 2.5D views
+
+The custom **Globe**, **Flat** and **2.5D** buttons call Cesium's native `morphTo3D`, `morphTo2D` and `morphToColumbusView` methods. Transitions are immediate; the active button follows the actual scene mode. Shapes, selections and minimised/dragged panels are retained. Existing drawing, selection and handles use the same geographic records in all views. An unfinished polygon must be finished or cancelled before switching; active edits are saved and camera flights cancelled before a mode change. The scene enables Cesium's 2D/Columbus support instead of `scene3DOnly`.
+
+Shape-name labels are anchored at height zero and clamped to the surface, with no upward screen offset. Their bottom-left corner sits at the geographic anchor. They remain camera-facing text for readability rather than text painted onto the terrain. The MOVE caption is placed beside its gold handle instead of above it.

@@ -32,6 +32,8 @@ import { polygonProblem, mergeVertices } from './topology.js';
 import { createHistory } from './history.js';
 import { bindMovablePanels } from './panels.js';
 import { bindViewControls } from './views.js';
+import { THEMES, bindThemeToggle } from './theme.js';
+let themePalette = THEMES.dark;
 let reflowPanels = () => {};
 const history = createHistory();
 const selectedIds = new Set();
@@ -479,13 +481,15 @@ function renderShape(s, isDraft = false) {
           position,
           label: {
             text: shapeName(s),
-            font: '13px sans-serif',
-            fillColor: color,
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 3,
+            font: '700 15px sans-serif',
+            fillColor: Cesium.Color.fromCssColorString(themePalette.labelText),
+            outlineColor: Cesium.Color.fromCssColorString(themePalette.labelOutline),
+            outlineWidth: 1,
             style: Cesium.LabelStyle.FILL_AND_OUTLINE,
             showBackground: true,
-            backgroundColor: Cesium.Color.fromCssColorString('#101b23').withAlpha(0.85),
+            backgroundColor: Cesium.Color.fromCssColorString(
+              themePalette.labelBackground,
+            ).withAlpha(0.98),
             backgroundPadding: new Cesium.Cartesian2(8, 5),
             // Anchor the bottom of the name at the actual surface point.
             // A screen-space upward offset appears to float when the globe tilts.
@@ -501,7 +505,11 @@ function renderShape(s, isDraft = false) {
     else {
       v.label.position = position;
       v.label.label.text = shapeName(s);
-      v.label.label.fillColor = color;
+      v.label.label.fillColor = Cesium.Color.fromCssColorString(themePalette.labelText);
+      v.label.label.outlineColor = Cesium.Color.fromCssColorString(themePalette.labelOutline);
+      v.label.label.backgroundColor = Cesium.Color.fromCssColorString(
+        themePalette.labelBackground,
+      ).withAlpha(0.98);
     }
   }
   viewer.scene.requestRender();
@@ -530,12 +538,12 @@ function handlePoint(p, data, hollow = false) {
   );
 }
 /**
- * Creates the synthetic gold MOVE control for a completed polygon. It is never a vertex.
- * @param {import('./geometry.js').PolygonShape} shape Polygon to position the handle within.
+ * Creates a shared gold MOVE control: circle centre or synthetic polygon centre.
+ * @param {Shape} shape Completed circle or polygon.
  * @returns {Cesium.Entity}
  */
 function moveHandle(shape) {
-  const point = polygonMovePoint(shape.vertices);
+  const point = shape.type === 'circle' ? shape.center : polygonMovePoint(shape.vertices);
   return entity(
     {
       position: toCartesian(point),
@@ -549,10 +557,10 @@ function moveHandle(shape) {
       },
       label: {
         text: 'MOVE',
-        font: '10px sans-serif',
-        fillColor: Cesium.Color.fromCssColorString('#ffda97'),
-        outlineColor: Cesium.Color.BLACK,
-        outlineWidth: 3,
+        font: '700 11px sans-serif',
+        fillColor: Cesium.Color.fromCssColorString(themePalette.moveText),
+        outlineColor: Cesium.Color.fromCssColorString(themePalette.moveOutline),
+        outlineWidth: 2,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
         pixelOffset: new Cesium.Cartesian2(-14, 0),
         horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
@@ -560,7 +568,7 @@ function moveHandle(shape) {
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       },
     },
-    { kind: 'polygonMove', id: shape.id, point },
+    { kind: shape.type === 'circle' ? 'center' : 'polygonMove', id: shape.id, point },
   );
 }
 /**
@@ -580,9 +588,9 @@ function renderHandles() {
   const s = draft || selectedShape();
   if (!s || (!draft && multiSelect)) return;
   if (s.type === 'circle') {
-    handles.push(handlePoint(s.center, { kind: 'center', id: s.id }));
+    handles.push(moveHandle(s));
     handles.push(
-      handlePoint(destination(s.center, s.bearing, s.radius), { kind: 'radius', id: s.id }),
+      handlePoint(destination(s.center, s.bearing, s.radius), { kind: 'radius', id: s.id }, true),
     );
   } else {
     s.vertices.forEach((p, i) =>
@@ -1283,6 +1291,22 @@ async function init() {
       imageryWarned = true;
       toast('Imagery could not load. Check your internet connection.');
     }
+  });
+  bindThemeToggle({
+    root: document.documentElement,
+    button: getElement('themeButton'),
+    meta: document.querySelector('meta[name="theme-color"]'),
+    storage: {
+      getItem: (key) => localStorage.getItem(key),
+      setItem: (key, value) => localStorage.setItem(key, value),
+    },
+    onChange: (palette) => {
+      themePalette = palette;
+      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString(palette.sky);
+      for (const shape of shapes) renderShape(shape);
+      renderHandles();
+      viewer.scene.requestRender();
+    },
   });
   viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(8, 25, 19500000) });
   try {

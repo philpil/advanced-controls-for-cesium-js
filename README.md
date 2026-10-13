@@ -93,3 +93,9 @@ Use **−** in either panel header to minimise it to a draggable title bar, and 
 The custom **Globe**, **Flat** and **2.5D** buttons call Cesium's native `morphTo3D`, `morphTo2D` and `morphToColumbusView` methods. Transitions are immediate; the active button follows the actual scene mode. Shapes, selections and minimised/dragged panels are retained. Existing drawing, selection and handles use the same geographic records in all views. An unfinished polygon must be finished or cancelled before switching; active edits are saved and camera flights cancelled before a mode change. The scene enables Cesium's 2D/Columbus support instead of `scene3DOnly`.
 
 Shape-name labels are anchored at height zero and clamped to the surface, with no upward screen offset. Their bottom-left corner sits at the geographic anchor. They remain camera-facing text for readability rather than text painted onto the terrain. The MOVE caption is placed beside its gold handle instead of above it.
+
+## Appearance
+
+Use the light-bulb button next to Help to toggle dark and light mode. The button lights up in light mode; its accessible label always names the next action. The UI panels, fields, menus, help dialog, label cards and empty scene background update together. The choice is saved separately under `cesium-advanced-controls-theme`, defaults to dark, and does not affect shapes, selection, undo history or the Natural Earth imagery.
+
+Shape names use bold 15px text with an almost opaque card: white on dark in dark mode, dark text on white in light mode. Selection no longer reduces label contrast by tinting the lettering. Circle centres use the same gold MOVE control as polygons; their radius handle uses the dark hollow style of polygon midpoint handles. The circle controls retain their move/resize behaviors.

@@ -9,9 +9,41 @@
   font-size: 13px;
   --panel: #141719ee;
   --border: #ffffff19;
-  --muted: #858e93;
+  --muted: #a6b2ba;
   --text: #edf1f3;
   --accent: #adf0d0;
+  --space: #000000;
+  --hover: #ffffff12;
+  --secondary: #c0ccd4;
+  --active-bg: #253c33;
+  --subtle-bg: #ffffff06;
+  --field: #0a0d0e;
+  --danger: #f4b5b2;
+  --on-accent: #132820;
+  --menu: #141b1ff5;
+  --menu-active: #adf0d01a;
+  --shadow: #0005;
+  --shadow-strong: #0009;
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --panel: #f7fafdf5;
+  --border: #1d34462e;
+  --muted: #455969;
+  --text: #17222c;
+  --accent: #146342;
+  --space: #dce9f2;
+  --hover: #18364e0d;
+  --secondary: #2c4355;
+  --active-bg: #ddf0e5;
+  --subtle-bg: #18364e08;
+  --field: #ffffff;
+  --danger: #982e2a;
+  --on-accent: #ffffff;
+  --menu: #f7fafdfa;
+  --menu-active: #ddf0e5;
+  --shadow: #17324826;
+  --shadow-strong: #17324866;
 }
 * {
   box-sizing: border-box;
@@ -23,7 +55,7 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: var(--space);
   color: var(--text);
 }
 button,
@@ -49,7 +81,7 @@ button {
     color 0.16s;
 }
 button:hover:not(:disabled) {
-  background: #ffffff12;
+  background: var(--hover);
 }
 button svg {
   width: 20px;
@@ -85,7 +117,7 @@ header {
 .identity small {
   display: block;
   font-size: 8px;
-  color: #717b80;
+  color: var(--muted);
   letter-spacing: 2px;
   margin-top: 7px;
   font-weight: 400;
@@ -99,7 +131,7 @@ header {
 #saved {
   font-size: 8px;
   letter-spacing: 1.8px;
-  color: #717b80;
+  color: var(--muted);
 }
 .icon-button {
   width: 30px;
@@ -107,7 +139,7 @@ header {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 50%;
-  color: #a8b3b8;
+  color: var(--secondary);
 }
 .toolbar {
   position: fixed;
@@ -118,7 +150,7 @@ header {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 40px #0005;
+  box-shadow: 0 12px 40px var(--shadow);
   backdrop-filter: blur(18px);
   gap: 4px;
 }
@@ -131,26 +163,26 @@ header {
   border-radius: 7px;
   background: transparent;
   font-size: 11px;
-  color: #abb3b7;
+  color: var(--secondary);
 }
 .toolbar button.active {
-  background: #253c33;
+  background: var(--active-bg);
   color: var(--accent);
 }
 kbd {
   font:
     9px ui-monospace,
     monospace;
-  color: #7f8b90;
-  background: #ffffff06;
-  border: 1px solid #ffffff12;
+  color: var(--muted);
+  background: var(--subtle-bg);
+  border: 1px solid var(--hover);
   border-radius: 3px;
   padding: 2px 4px;
   margin-left: 3px;
 }
 .active kbd {
-  color: #8ba996;
-  border-color: #8ba99630;
+  color: var(--muted);
+  border-color: var(--border);
 }
 .divider {
   width: 1px;
@@ -167,7 +199,7 @@ kbd {
   border-radius: 12px;
   padding: 20px;
   backdrop-filter: blur(18px);
-  box-shadow: 0 12px 40px #0005;
+  box-shadow: 0 12px 40px var(--shadow);
 }
 .eyebrow {
   font-size: 8px;
@@ -198,19 +230,19 @@ label {
   margin-bottom: 9px;
 }
 label span {
-  color: #6d787d;
+  color: var(--muted);
 }
 input {
   width: 100%;
   padding: 11px;
-  background: #0a0d0e;
-  border: 1px solid #ffffff20;
+  background: var(--field);
+  border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 input:focus {
-  border-color: #adf0d080;
+  border-color: var(--accent);
 }
 .data-row {
   display: flex;
@@ -228,7 +260,7 @@ input:focus {
   font:
     10px ui-monospace,
     monospace;
-  color: #bac2c5;
+  color: var(--secondary);
 }
 #polygonFields p {
   color: var(--muted);
@@ -244,7 +276,7 @@ input:focus {
 #deleteShape {
   border: 0;
   background: none;
-  color: #d7a09f;
+  color: var(--danger);
   font-size: 10px;
   width: 100%;
   display: flex;
@@ -262,7 +294,7 @@ footer {
   gap: 20px;
   pointer-events: none;
   font-size: 10px;
-  color: #98a3a8;
+  color: var(--secondary);
 }
 #hint {
   display: flex;
@@ -282,12 +314,12 @@ footer {
   font:
     9px ui-monospace,
     monospace;
-  color: #748087;
+  color: var(--muted);
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
 .separator {
-  color: #394247;
+  color: var(--border);
 }
 #drawing {
   position: fixed;
@@ -327,14 +359,14 @@ footer {
 }
 #drawing button {
   border: 1px solid var(--border);
-  background: #ffffff06;
+  background: var(--subtle-bg);
   border-radius: 6px;
   padding: 9px 12px;
   font-size: 10px;
 }
 #drawing .accent {
   background: var(--accent);
-  color: #132820;
+  color: var(--on-accent);
   border-color: var(--accent);
   flex: 1;
 }
@@ -348,9 +380,9 @@ footer {
   top: 32px;
   transform: translateX(-50%);
   padding: 11px 17px;
-  background: #253c33;
-  border: 1px solid #adf0d035;
-  color: #d3f5e6;
+  background: var(--active-bg);
+  border: 1px solid var(--border);
+  color: var(--accent);
   border-radius: 8px;
   font-size: 11px;
   opacity: 0;
@@ -365,7 +397,7 @@ footer {
 #loading {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: var(--space);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -385,7 +417,7 @@ footer {
 .spinner {
   width: 24px;
   height: 24px;
-  border: 1px solid #adf0d02f;
+  border: 1px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -396,9 +428,9 @@ footer {
   }
 }
 dialog {
-  background: #121618;
+  background: var(--panel);
   color: var(--text);
-  border: 1px solid #ffffff23;
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px;
   max-width: 490px;
@@ -406,7 +438,7 @@ dialog {
   max-height: 85dvh;
 }
 dialog::backdrop {
-  background: #0009;
+  background: var(--shadow-strong);
   backdrop-filter: blur(8px);
 }
 dialog h2 {
@@ -422,7 +454,7 @@ dialog dt {
 dialog dd {
   font-size: 11px;
   line-height: 1.8;
-  color: #9ca8ae;
+  color: var(--secondary);
   margin: 8px 0;
 }
 #closeAbout {
@@ -436,12 +468,12 @@ dialog dd {
   border-top: 1px solid var(--border);
   margin-top: 25px;
   padding-top: 18px;
-  color: #78868d;
+  color: var(--muted);
   font-size: 10px;
   line-height: 1.8;
 }
 .attribution a {
-  color: #aabbbd;
+  color: var(--secondary);
 }
 #cesiumCredits {
   position: relative !important;
@@ -545,11 +577,11 @@ dialog dd {
   max-width: calc(100vw - 16px);
   max-height: min(340px, calc(100dvh - 16px));
   overflow-y: auto;
-  background: #141b1ff5;
-  border: 1px solid #adf0d035;
+  background: var(--menu);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 7px;
-  box-shadow: 0 14px 50px #0009;
+  box-shadow: 0 14px 50px var(--shadow-strong);
   backdrop-filter: blur(16px);
 }
 .menu-heading {
@@ -574,7 +606,7 @@ dialog dd {
 }
 #selectionMenu button[aria-checked='true'],
 #shapeList button[aria-current='true'] {
-  background: #adf0d013;
+  background: var(--menu-active);
   color: var(--accent);
 }
 #selectionMenu button small,
@@ -585,7 +617,7 @@ dialog dd {
 #selectionMenu button:focus-visible,
 #shapeList button:focus-visible {
   outline-offset: -2px;
-  background: #adf0d01a;
+  background: var(--menu-active);
 }
 
 #shapeCount {
@@ -670,7 +702,7 @@ dialog dd {
   background: var(--panel);
   border: 1px solid var(--border);
   backdrop-filter: blur(18px);
-  box-shadow: 0 12px 40px #0005;
+  box-shadow: 0 12px 40px var(--shadow);
 }
 .selection-panel p {
   font-size: 11px;
@@ -683,7 +715,7 @@ dialog dd {
   margin-top: 10px;
 }
 .panel-button.danger {
-  color: #d7a09f;
+  color: var(--danger);
 }
 #inspector,
 .selection-panel {
@@ -806,11 +838,11 @@ dialog dd {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #abb3b7;
+  color: var(--secondary);
   font-size: 11px;
 }
 .view-toolbar button.active {
-  background: #253c33;
+  background: var(--active-bg);
   color: var(--accent);
 }
 @media (max-width: 720px) {
@@ -824,4 +856,33 @@ dialog dd {
   #toast {
     top: 266px;
   }
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--panel);
+  color: var(--text);
+}
+.theme-toggle svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+.theme-toggle.lit .bulb-glass {
+  fill: #ffd76c;
+  stroke: #745100;
+}
+:root[data-theme='light'] .identity,
+:root[data-theme='light'] #saved,
+:root[data-theme='light'] #hint,
+:root[data-theme='light'] footer .status {
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.right {
+  gap: 12px;
 }

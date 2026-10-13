@@ -32,6 +32,19 @@
       </div>
       <div class="right">
         <span id="saved">LOCAL WORKSPACE</span>
+        <button
+          id="themeButton"
+          type="button"
+          class="icon-button theme-toggle"
+          aria-label="Switch to light mode"
+          aria-pressed="false"
+          title="Switch to light mode"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="bulb-glass" d="M8 15a6 6 0 1 1 8 0l-1 3H9z" />
+            <path d="M9 21h6M12 1v1M3 4l1 1M20 5l1-1M1 11h2M21 11h2" />
+          </svg>
+        </button>
         <button id="aboutButton" class="icon-button" aria-label="Help and attribution">?</button>
       </div>
     </header>
@@ -230,6 +243,11 @@
           polygon to move the entire shape around the globe. Drag its solid handles to edit; click
           hollow midpoint handles to insert a vertex. Click overlapping shapes to choose one from a
           popup menu.
+        </dd>
+        <dt>Appearance</dt>
+        <dd>
+          Use the light-bulb button to switch between dark and light mode. Your choice is remembered
+          on this browser. Shape names use bold, high-contrast text.
         </dd>
         <dt>Views</dt>
         <dd>

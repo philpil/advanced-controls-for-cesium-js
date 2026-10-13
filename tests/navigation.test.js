@@ -39,6 +39,11 @@ function harness() {
       { id: 'b', type: 'polygon', vertices: [{}, {}, {}] },
     ],
     selected: null,
+    selectedIds: new Set(),
+    multiSelect: false,
+    shapeName: (s) =>
+      s.name ||
+      `${s.type === 'circle' ? 'Circle' : 'Polygon'} ${String(s.id === 'a' ? 1 : 2).padStart(2, '0')}`,
     draft: null,
     reducedMotion: false,
     notices: [],

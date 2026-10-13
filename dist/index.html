@@ -53,13 +53,35 @@
           <path d="M3 5h4v4H3zm12-3h4v4h-4zm3 14h4v4h-4zM4 18h4v4H4z" /></svg
         ><span>Polygon</span><kbd>P</kbd>
       </button>
+      <span class="divider"></span>
+      <button
+        id="multiSelectTool"
+        aria-pressed="false"
+        title="Toggle multiple selection; Shift-click also works"
+      >
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="12" height="12" />
+          <path d="M9 18v3h12V9h-3" /></svg
+        ><span>Multi</span>
+      </button>
     </nav>
+    <div class="history-toolbar" role="group" aria-label="Edit history">
+      <button id="undoEdit" disabled title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
+      <button id="redoEdit" disabled title="Redo (Ctrl/Cmd+Shift+Z)">↷ Redo</button>
+    </div>
     <aside id="inspector" hidden>
       <div class="eyebrow">
         <span id="shapeType">CIRCLE</span>
         <button id="closeInspector" aria-label="Deselect shape">×</button>
       </div>
       <h1 id="shapeName">Circle 01</h1>
+      <form id="nameForm">
+        <label for="nameInput">Shape name</label>
+        <div class="name-controls">
+          <input id="nameInput" type="text" maxlength="80" required autocomplete="off" />
+          <button type="submit">Rename</button>
+        </div>
+      </form>
       <div id="circleFields">
         <label for="radiusInput">Radius <span>km</span></label>
         <input id="radiusInput" type="number" min="0.01" max="5000" step="0.1" />
@@ -81,6 +103,16 @@
       <div class="inspector-actions">
         <button id="deleteShape">Delete shape <kbd>⌫</kbd></button>
       </div>
+    </aside>
+    <aside id="multiSelection" class="selection-panel" hidden aria-label="Multiple selected shapes">
+      <div class="eyebrow">
+        MULTIPLE SELECTION <button id="clearSelection" aria-label="Clear selection">×</button>
+      </div>
+      <h1 id="selectionCount">2 shapes selected</h1>
+      <p>Select exactly two overlapping or edge-sharing shapes to merge into one polygon.</p>
+      <button id="mergeShapes" class="panel-button">Merge into polygon</button>
+      <button id="deleteSelection" class="panel-button danger">Delete selected shapes</button>
+      <p>Undo restores the original shapes after a merge or deletion.</p>
     </aside>
     <div id="drawing" hidden>
       <span><i></i> DRAWING POLYGON</span>
@@ -140,7 +172,12 @@
         <dd>
           Drag empty globe to orbit. Scroll or pinch to zoom. V selects, C draws a circle, P draws a
           polygon. Escape cancels drawing or deselects. Delete removes the selected shape. Click the
-          shape count to browse all completed shapes and fly to one. Drawings save on this browser.
+          shape count to browse all completed shapes and fly to one. Shape names appear on the
+          globe; select one to rename it. Shift/Ctrl/Cmd-click or use Multi to toggle several
+          shapes, including in the shape list. Select exactly two overlapping shapes and choose
+          Merge into polygon. Disconnected results and holes are rejected. Crossing-edge edits
+          revert automatically. Undo/Redo restores completed edits (Ctrl/Cmd+Z; Ctrl/Cmd+Shift+Z).
+          Drawings save on this browser.
         </dd>
       </dl>
       <div class="attribution">
@@ -152,8 +189,16 @@
         <a href="https://cesium.com/platform/cesiumjs/" target="_blank" rel="noreferrer"
           >CesiumJS</a
         >
-        1.121.0. Natural Earth is a low-resolution global basemap; zooming in does not add
-        street-level detail.
+        1.121.0. Geometry:
+        <a href="https://github.com/mfogel/polygon-clipping" target="_blank" rel="noreferrer"
+          >polygon-clipping</a
+        >
+        and
+        <a href="https://geographiclib.sourceforge.io/" target="_blank" rel="noreferrer"
+          >GeographicLib</a
+        >
+        (MIT; <a href="vendor/NOTICE.txt" target="_blank" rel="noreferrer">notices</a>). Natural
+        Earth is a low-resolution global basemap; zooming in does not add street-level detail.
         <div id="cesiumCredits"></div>
       </div>
     </dialog>

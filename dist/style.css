@@ -520,7 +520,7 @@ dialog dd {
     padding: 15px;
   }
   #toast {
-    top: 150px;
+    top: 208px;
     text-align: center;
   }
   .inspector-actions {
@@ -624,5 +624,112 @@ dialog dd {
   }
   footer .status {
     justify-content: flex-end;
+  }
+}
+
+/* Selection and history controls use native buttons for touch and keyboard. */
+.history-toolbar {
+  position: fixed;
+  top: 162px;
+  left: 32px;
+  display: flex;
+  gap: 8px;
+}
+.history-toolbar button,
+.panel-button,
+.name-controls button {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--accent);
+  padding: 10px 12px;
+}
+.name-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.name-controls input {
+  min-width: 0;
+}
+.name-controls button {
+  font-size: 10px;
+  padding: 9px;
+}
+#shapeName {
+  overflow-wrap: anywhere;
+}
+.selection-panel {
+  position: fixed;
+  top: 102px;
+  right: 32px;
+  width: 256px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 40px #0005;
+}
+.selection-panel p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.panel-button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+}
+.panel-button.danger {
+  color: #d7a09f;
+}
+#inspector,
+.selection-panel {
+  max-height: calc(100dvh - 210px);
+  overflow-y: auto;
+}
+#shapeList button span,
+#selectionMenu button span {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+@media (max-width: 720px) {
+  .toolbar {
+    max-width: calc(100vw - 36px);
+  }
+  .toolbar button {
+    padding: 10px 8px;
+    gap: 5px;
+    min-height: 44px;
+  }
+  .toolbar button svg {
+    width: 17px;
+    height: 17px;
+  }
+  .history-toolbar {
+    top: 151px;
+    left: 18px;
+  }
+  .history-toolbar button {
+    font-size: 10px;
+  }
+  .selection-panel {
+    top: auto;
+    bottom: 87px;
+    right: 18px;
+    width: 240px;
+    padding: 16px;
+  }
+  #inspector,
+  .selection-panel {
+    max-height: calc(100dvh - 285px);
+  }
+  #inspector {
+    width: 250px;
+  }
+  input {
+    font-size: 16px;
   }
 }

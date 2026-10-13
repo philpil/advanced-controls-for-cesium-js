@@ -26,7 +26,13 @@ import {
   rotatePolygon,
   selectionCandidates,
   polygonMovePoint,
+  normalizeName,
 } from './geometry.js';
+import { polygonProblem, mergeVertices } from './topology.js';
+import { createHistory } from './history.js';
+const history = createHistory();
+const selectedIds = new Set();
+let multiSelect = false;
 /**
  * @param {string} id Element ID.
  * @returns {HTMLElement} Required application element.
@@ -51,7 +57,7 @@ let shapes = [],
 const ui = {
   circle: 'Click the globe to place the circle centre.',
   polygon: 'Click to add vertices. Double-click or press Enter to finish.',
-  select: 'Select a shape to edit. Drag empty globe to orbit; scroll to zoom.',
+  select: 'Select a shape to edit. Shift-click or use Multi to select several shapes.',
 };
 /**
  * Displays a transient, non-blocking status message.
@@ -68,7 +74,10 @@ function toast(message) {
  * Persists completed shapes only. Storage failures leave editing usable.
  * @returns {void}
  */
-function save() {
+function save(record = true) {
+  if (record) history.record(shapes);
+  getElement('undoEdit').disabled = !history.canUndo;
+  getElement('redoEdit').disabled = !history.canRedo;
   try {
     localStorage.setItem(KEY, JSON.stringify({ version: 1, shapes }));
     getElement('saved').textContent = 'SAVED ON THIS DEVICE';
@@ -83,7 +92,12 @@ const createShapeId = () => crypto.randomUUID();
 /**
  * @returns {Shape|undefined} The selected completed shape.
  */
-const selectedShape = () => shapes.find((s) => s.id === selected);
+const selectedShape = () =>
+  selectedIds.size === 1 ? shapes.find((s) => s.id === selected) : undefined;
+/** Stable names are assigned at creation/migration, so deletion never renumbers labels. */
+const shapeName = (s) =>
+  normalizeName(s.name) ||
+  `${s.type === 'circle' ? 'Circle' : 'Polygon'} ${String(shapes.indexOf(s) + 1).padStart(2, '0')}`;
 /**
  * Projects a geographic point onto the WGS 84 surface at zero height.
  * @param {GeoPoint} p Longitude/latitude in radians.
@@ -187,8 +201,9 @@ function closeSelectionMenu() {
 function chooseAt(position, event) {
   const ids = selectionCandidates(pickAll(position), shapes);
   closeSelectionMenu();
+  const additive = event.shiftKey || event.ctrlKey || event.metaKey || multiSelect;
   if (ids.length < 2) {
-    select(ids[0] || null);
+    if (ids[0] || !additive) select(ids[0] || null, additive);
     return;
   }
   const menu = getElement('selectionMenu');
@@ -200,18 +215,19 @@ function chooseAt(position, event) {
     const s = shapes.find((s) => s.id === id),
       button = document.createElement('button');
     button.type = 'button';
-    button.setAttribute('role', 'menuitemradio');
-    button.setAttribute('aria-checked', String(selected === id));
+    button.setAttribute('role', additive ? 'menuitemcheckbox' : 'menuitemradio');
+    button.setAttribute('aria-checked', String(selectedIds.has(id)));
     const name = document.createElement('span');
-    name.textContent = `${s.type === 'circle' ? 'Circle' : 'Polygon'} ${String(shapes.indexOf(s) + 1).padStart(2, '0')}`;
+    name.textContent = shapeName(s);
     const detail = document.createElement('small');
     detail.textContent =
       (s.type === 'circle'
         ? `${(s.radius / 1000).toFixed(1)} km radius`
-        : `${s.vertices.length} vertices`) + (selected === id ? ' · selected' : '');
+        : `${s.vertices.length} vertices`) + (selectedIds.has(id) ? ' · selected' : '');
     button.append(name, detail);
     button.onclick = () => {
-      select(id);
+      select(id, additive);
+      if (additive) return;
       toast(
         'Shape selected. Drag its handles' +
           (s.type === 'polygon' ? '; the gold MOVE handle moves the whole polygon.' : '.'),
@@ -247,23 +263,33 @@ function renderShapeList() {
   const heading = document.createElement('div');
   heading.className = 'menu-heading';
   heading.textContent = shapes.length
-    ? 'YOUR SHAPES · SELECT TO FLY'
+    ? multiSelect
+      ? 'YOUR SHAPES · TOGGLE SELECTION'
+      : 'YOUR SHAPES · SELECT TO FLY'
     : 'No shapes yet. Draw a circle or polygon.';
   list.append(heading);
   for (const [index, shape] of shapes.entries()) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.setAttribute('role', 'menuitem');
-    if (shape.id === selected) button.setAttribute('aria-current', 'true');
+    button.setAttribute('role', multiSelect ? 'menuitemcheckbox' : 'menuitem');
+    button.setAttribute('aria-checked', String(selectedIds.has(shape.id)));
+    if (selectedIds.has(shape.id)) button.setAttribute('aria-current', 'true');
     const name = document.createElement('span');
-    name.textContent = `${shape.type === 'circle' ? 'Circle' : 'Polygon'} ${String(index + 1).padStart(2, '0')}`;
+    name.textContent = shapeName(shape);
     const detail = document.createElement('small');
     detail.textContent =
       shape.type === 'circle'
         ? `${(shape.radius / 1000).toLocaleString(undefined, { maximumFractionDigits: 3 })} km radius`
         : `${shape.vertices.length} vertices`;
     button.append(name, detail);
-    button.onclick = () => flyToShape(shape.id);
+    button.onclick = (e = {}) => {
+      if (multiSelect || e.shiftKey || e.ctrlKey || e.metaKey) {
+        if (draft) return toast('Finish or cancel your polygon before selecting shapes.');
+        select(shape.id, true, true);
+        renderShapeList();
+        list.querySelectorAll('button')[index]?.focus({ preventScroll: true });
+      } else flyToShape(shape.id);
+    };
     list.append(button);
   }
 }
@@ -369,6 +395,7 @@ function removeVisual(id) {
   if (v) {
     remove(v.fill);
     remove(v.line);
+    remove(v.label);
     visuals.delete(id);
   }
 }
@@ -385,7 +412,7 @@ function renderShape(s, isDraft = false) {
     v = {};
     visuals.set(s.id, v);
   }
-  const active = s.id === selected || isDraft,
+  const active = selectedIds.has(s.id) || isDraft,
     color = Cesium.Color.fromCssColorString(active ? '#adf0d0' : '#70b5d7');
   const points = vertices.map(toCartesian);
   if (points.length >= 3) {
@@ -433,10 +460,40 @@ function renderShape(s, isDraft = false) {
     else {
       v.line.polyline.positions = closed;
       v.line.polyline.material = color;
+      v.line.polyline.zIndex = active ? 3 : 1;
     }
   } else if (v.line) {
     remove(v.line);
     v.line = null;
+  }
+  if (!isDraft && vertices.length >= 3) {
+    const position = toCartesian(s.type === 'circle' ? s.center : polygonMovePoint(vertices));
+    if (!v.label)
+      v.label = entity(
+        {
+          position,
+          label: {
+            text: shapeName(s),
+            font: '13px sans-serif',
+            fillColor: color,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 3,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            showBackground: true,
+            backgroundColor: Cesium.Color.fromCssColorString('#101b23').withAlpha(0.85),
+            backgroundPadding: new Cesium.Cartesian2(8, 5),
+            pixelOffset: new Cesium.Cartesian2(0, -52),
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            disableDepthTestDistance: 0,
+          },
+        },
+        { kind: 'shape', id: s.id },
+      );
+    else {
+      v.label.position = position;
+      v.label.label.text = shapeName(s);
+      v.label.label.fillColor = color;
+    }
   }
   viewer.scene.requestRender();
 }
@@ -510,7 +567,7 @@ function clearHandles() {
 function renderHandles() {
   clearHandles();
   const s = draft || selectedShape();
-  if (!s) return;
+  if (!s || (!draft && multiSelect)) return;
   if (s.type === 'circle') {
     handles.push(handlePoint(s.center, { kind: 'center', id: s.id }));
     handles.push(
@@ -540,6 +597,11 @@ function renderHandles() {
  */
 function updateUI() {
   const s = selectedShape();
+  getElement('multiSelection').hidden = selectedIds.size < 2 || !!draft;
+  getElement('selectionCount').textContent = `${selectedIds.size} shapes selected`;
+  getElement('mergeShapes').disabled = selectedIds.size !== 2;
+  getElement('multiSelectTool').classList.toggle('active', multiSelect);
+  getElement('multiSelectTool').setAttribute('aria-pressed', String(multiSelect));
   getElement('inspector').hidden = !s || !!draft;
   getElement('drawing').hidden = mode !== 'polygon';
   getElement('shapeCount').textContent = `${shapes.length} SHAPE${shapes.length === 1 ? '' : 'S'}`;
@@ -548,18 +610,25 @@ function updateUI() {
     getElement(t + 'Tool').setAttribute('aria-pressed', String(t === mode));
   }
   getElement('hintText').textContent =
-    s && mode === 'select'
-      ? s.type === 'circle'
-        ? 'Drag the centre to move. Drag the edge handle to resize.'
-        : 'Drag the gold MOVE handle to move the polygon. Other handles edit vertices.'
-      : ui[mode];
+    selectedIds.size > 1
+      ? 'Select two overlapping shapes to merge. Shift-click or use Multi to add or remove shapes.'
+      : multiSelect
+        ? 'Click shapes to toggle selection. Disable Multi to edit individual shapes.'
+        : s && mode === 'select'
+          ? s.type === 'circle'
+            ? 'Drag the centre to move. Drag the edge handle to resize.'
+            : 'Drag the gold MOVE handle to move the polygon. Other handles edit vertices.'
+          : ui[mode];
   getElement('drawingCount').textContent = `${draft?.vertices.length || 0} points`;
   getElement('finishPolygon').disabled = !draft || draft.vertices.length < 3;
   getElement('undoPoint').disabled = !draft?.vertices.length;
   if (s) {
     getElement('shapeType').textContent = s.type.toUpperCase();
-    getElement('shapeName').textContent =
-      `${s.type === 'circle' ? 'Circle' : 'Polygon'} ${String(shapes.indexOf(s) + 1).padStart(2, '0')}`;
+    getElement('shapeName').textContent = shapeName(s);
+    const input = getElement('nameInput');
+    if (input.dataset.shapeId !== s.id || document.activeElement !== input)
+      input.value = shapeName(s);
+    input.dataset.shapeId = s.id;
     getElement('circleFields').hidden = s.type !== 'circle';
     getElement('polygonFields').hidden = s.type !== 'polygon';
     if (s.type === 'circle') {
@@ -576,22 +645,25 @@ function updateUI() {
  * @param {string|null} id Shape ID, or null to deselect.
  * @returns {void}
  */
-function select(id) {
-  closeShapeList();
+function select(id, additive = false, keepList = false) {
+  stopDrag();
+  if (!keepList) closeShapeList();
   closeSelectionMenu();
-  const old = selected;
-  selected = id;
-  if (old) {
-    const s = shapes.find((x) => x.id === old);
-    if (s) renderShape(s);
-  }
+  const old = new Set(selectedIds);
+  if (!additive || !id) selectedIds.clear();
   if (id) {
-    const s = selectedShape();
+    if (additive && selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+  }
+  selected = selectedIds.size === 1 ? [...selectedIds][0] : null;
+  for (const key of new Set([...old, ...selectedIds])) {
+    const s = shapes.find((x) => x.id === key);
     if (s) renderShape(s);
   }
   renderHandles();
   updateUI();
 }
+
 /**
  * Ends an active edit, restores camera input, and saves the completed edit.
  * @returns {void}
@@ -616,6 +688,7 @@ function setMode(next) {
     draft = null;
   }
   mode = next;
+  if (next !== 'select') multiSelect = false;
   select(null);
 }
 /**
@@ -631,7 +704,17 @@ function finishPolygon() {
     toast('The closing edge needs distinct, non-antipodal endpoints.');
     return;
   }
+  const problem = polygonProblem(draft.vertices);
+  if (problem) {
+    draft.vertices.pop();
+    renderShape(draft, true);
+    renderHandles();
+    updateUI();
+    toast(`${problem} Last point removed.`);
+    return;
+  }
   const s = draft;
+  s.name = `Polygon ${String(shapes.length + 1).padStart(2, '0')}`;
   shapes.push(s);
   draft = null;
   mode = 'select';
@@ -659,7 +742,10 @@ function addVertex(p) {
     toast('Maximum 500 vertices per polygon.');
     return;
   }
-  draft.vertices.push(p);
+  const candidate = [...draft.vertices, p];
+  const problem = polygonProblem(candidate);
+  if (problem) return toast(`${problem} New point removed.`);
+  draft.vertices = candidate;
   renderShape(draft, true);
   renderHandles();
   updateUI();
@@ -669,12 +755,53 @@ function addVertex(p) {
  * @returns {void}
  */
 function deleteSelected() {
-  if (!selected) return;
-  removeVisual(selected);
-  shapes = shapes.filter((s) => s.id !== selected);
+  if (!selectedIds.size) return;
+  stopDrag();
+  for (const id of selectedIds) removeVisual(id);
+  shapes = shapes.filter((s) => !selectedIds.has(s.id));
   select(null);
   save();
 }
+/** Performs an atomic union: replace originals only after all geometry checks pass. */
+function mergeSelected() {
+  stopDrag();
+  const originals = shapes.filter((s) => selectedIds.has(s.id));
+  try {
+    const vertices = mergeVertices(originals);
+    const merged = {
+      id: createShapeId(),
+      type: 'polygon',
+      name: normalizeName(`${shapeName(originals[0])} + ${shapeName(originals[1])}`),
+      vertices,
+    };
+    for (const s of originals) removeVisual(s.id);
+    shapes = shapes.filter((s) => !selectedIds.has(s.id));
+    shapes.push(merged);
+    multiSelect = false;
+    select(merged.id);
+    save();
+    toast('Shapes merged. Rename the polygon in the inspector. Undo restores the originals.');
+  } catch (error) {
+    toast(error.message);
+  }
+}
+/** Restores an independent history snapshot; selection and editing handles are transient. */
+function restoreHistory(direction) {
+  if (draft) return toast('Finish or cancel your polygon before undoing completed edits.');
+  stopDrag();
+  const restored = history[direction]();
+  if (!restored) return;
+  for (const s of shapes) removeVisual(s.id);
+  shapes = restored;
+  selectedIds.clear();
+  selected = null;
+  mode = 'select';
+  for (const s of shapes) renderShape(s);
+  renderHandles();
+  updateUI();
+  save(false);
+}
+
 /**
  * Rejects coincident and nearly antipodal endpoints before geodesic construction.
  * @param {GeoPoint} a Edge start.
@@ -696,7 +823,9 @@ function applyDrag(p) {
   const s = selectedShape();
   if (!s || !drag) return;
   if (drag.kind === 'polygon') {
-    s.vertices = rotatePolygon(drag.original, drag.anchor, p);
+    const vertices = rotatePolygon(drag.original, drag.anchor, p);
+    if (polygonProblem(vertices)) return toast('This move cannot preserve a valid polygon.');
+    s.vertices = vertices;
   } else if (drag.kind === 'center') {
     s.center = p;
   } else if (drag.kind === 'radius') {
@@ -710,8 +839,23 @@ function applyDrag(p) {
   } else if (drag.kind === 'vertex') {
     const prev = s.vertices[(drag.index + s.vertices.length - 1) % s.vertices.length],
       next = s.vertices[(drag.index + 1) % s.vertices.length];
-    if (!validEdge(prev, p) || !validEdge(p, next)) return;
-    s.vertices[drag.index] = p;
+    const candidate = s.vertices.map((v, i) => (i === drag.index ? p : v));
+    const problem =
+      !validEdge(prev, p) || !validEdge(p, next)
+        ? 'Edges need distinct, non-antipodal endpoints.'
+        : polygonProblem(candidate);
+    if (problem) {
+      s.vertices = drag.originalVertices.map((v) => ({ ...v }));
+      if (!drag.rejected)
+        toast(
+          `${problem} ${drag.newVertex ? 'New point removed.' : 'Vertex restored to its starting location.'}`,
+        );
+      drag.rejected = true;
+      if (drag.newVertex) stopDrag();
+    } else {
+      s.vertices = candidate;
+      drag.rejected = false;
+    }
   }
   renderShape(s);
   renderHandles();
@@ -728,7 +872,7 @@ function handlePointerDown(e) {
   if (!e.isPrimary || e.button !== 0) return;
   closeSelectionMenu();
   gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
-  if (mode !== 'select') return;
+  if (mode !== 'select' || multiSelect || e.shiftKey || e.ctrlKey || e.metaKey) return;
   const position = toScreenPosition(e),
     hits = pickAll(position),
     handle = hits.find((h) => h.kind !== 'shape');
@@ -736,19 +880,27 @@ function handlePointerDown(e) {
   if (handle) {
     const s = shapes.find((s) => s.id === handle.id);
     if (!s) return;
-    selected = s.id;
-    data = { ...handle };
+    data = { ...handle, originalVertices: s.vertices?.map((v) => ({ ...v })) };
     if (handle.kind === 'midpoint') {
       if (s.vertices.length >= 500) {
         toast('Maximum 500 vertices per polygon.');
         return;
       }
-      s.vertices = insertVertex(s.vertices, handle.index, handle.point);
-      data = { kind: 'vertex', id: s.id, index: handle.index + 1 };
+      const vertices = insertVertex(s.vertices, handle.index, handle.point);
+      const problem = polygonProblem(vertices);
+      if (problem) return toast(`${problem} New point removed.`);
+      const originalVertices = s.vertices.map((v) => ({ ...v }));
+      s.vertices = vertices;
+      data = {
+        kind: 'vertex',
+        id: s.id,
+        index: handle.index + 1,
+        originalVertices,
+        newVertex: true,
+      };
       renderShape(s);
       renderHandles();
       updateUI();
-      save();
     }
   } else return;
   // Whole-polygon movement is restricted to its synthetic handle.
@@ -886,6 +1038,7 @@ function bind() {
   });
   getElement('shapeList').addEventListener('focusout', (e) => {
     if (
+      e.relatedTarget &&
       !getElement('shapeList').contains(e.relatedTarget) &&
       e.relatedTarget !== getElement('shapeCount')
     )
@@ -923,6 +1076,7 @@ function bind() {
       const s = {
         id: createShapeId(),
         type: 'circle',
+        name: `Circle ${String(shapes.length + 1).padStart(2, '0')}`,
         center: p,
         radius: clampRadius(viewer.camera.positionCartographic.height * 0.055),
         bearing: Math.PI / 2,
@@ -957,6 +1111,32 @@ function bind() {
       updateUI();
     }
   };
+  getElement('multiSelectTool').onclick = () => {
+    if (mode !== 'select') setMode('select');
+    stopDrag();
+    multiSelect = !multiSelect;
+    renderHandles();
+    updateUI();
+    if (!getElement('shapeList').hidden) renderShapeList();
+    if (multiSelect) toast('Click shapes to add or remove them. You can also use the shape list.');
+  };
+  getElement('mergeShapes').onclick = mergeSelected;
+  getElement('deleteSelection').onclick = deleteSelected;
+  getElement('clearSelection').onclick = () => select(null);
+  getElement('undoEdit').onclick = () => restoreHistory('undo');
+  getElement('redoEdit').onclick = () => restoreHistory('redo');
+  getElement('nameForm').onsubmit = (e) => {
+    e.preventDefault();
+    const s = selectedShape();
+    if (!s) return;
+    const name = normalizeName(getElement('nameInput').value);
+    if (!name) return toast('Enter a shape name.');
+    s.name = name;
+    getElement('nameInput').value = name;
+    renderShape(s);
+    updateUI();
+    save();
+  };
   getElement('deleteShape').onclick = deleteSelected;
   getElement('closeInspector').onclick = () => select(null);
   getElement('radiusInput').onchange = () => {
@@ -984,6 +1164,11 @@ function bind() {
     )
       return;
     const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && (k === 'z' || k === 'y')) {
+      e.preventDefault();
+      restoreHistory(k === 'y' || e.shiftKey ? 'redo' : 'undo');
+      return;
+    }
     if (k === 'escape') {
       setMode('select');
       return;
@@ -1064,7 +1249,16 @@ async function init() {
   } catch {
     shapes = [];
   }
-  for (const s of shapes) renderShape(s);
+  for (const s of shapes) {
+    s.name = shapeName(s);
+    if (s.type === 'polygon' && polygonProblem(s.vertices))
+      toast(
+        'An older polygon has crossing or unsupported edges. Delete or undo it before merging.',
+      );
+    renderShape(s);
+  }
+  history.reset(shapes);
+  save(false);
   bind();
   updateUI();
   getElement('loading').hidden = true;

@@ -6,12 +6,14 @@
  * @property {number} lat Latitude in [-PI/2, PI/2].
  * @typedef {Object} CircleShape
  * @property {string} id Persistent identifier.
+ * @property {string} [name] User-visible name, up to 80 characters.
  * @property {'circle'} type Shape discriminator.
  * @property {GeoPoint} center Geographic centre.
  * @property {number} radius Surface radius in metres.
  * @property {number} bearing Radius-handle azimuth clockwise from north, radians.
  * @typedef {Object} PolygonShape
  * @property {string} id Persistent identifier.
+ * @property {string} [name] User-visible name, up to 80 characters.
  * @property {'polygon'} type Shape discriminator.
  * @property {GeoPoint[]} vertices Ordered vertices; closure is implicit.
  * @typedef {CircleShape|PolygonShape} Shape
@@ -121,6 +123,14 @@ export function validPoint(p) {
     Math.abs(p.lat) <= Math.PI / 2
   );
 }
+/** Trims names and removes control characters; empty names are rejected by UI. */
+export const normalizeName = (name) =>
+  typeof name === 'string'
+    ? name
+        .replace(/[\u0000-\u001f\u007f-\u009f]/g, '')
+        .trim()
+        .slice(0, 80)
+    : '';
 /**
  * Validates a versioned save, discards malformed/duplicate shapes and copies geometry. Synthetic handles and transient interaction state are never restored.
  * @param {unknown} raw Parsed JSON save record.
@@ -147,8 +157,9 @@ export function restoreShapes(raw) {
       if (okay) ids.add(s.id);
       return okay;
     })
-    .map((s) =>
-      s.type === 'circle'
+    .map((s) => ({
+      ...(normalizeName(s.name) ? { name: normalizeName(s.name) } : {}),
+      ...(s.type === 'circle'
         ? {
             id: s.id,
             type: s.type,
@@ -156,8 +167,8 @@ export function restoreShapes(raw) {
             radius: s.radius,
             bearing: Number.isFinite(s.bearing) ? s.bearing : Math.PI / 2,
           }
-        : { id: s.id, type: s.type, vertices: s.vertices.map((p) => ({ ...p })) },
-    );
+        : { id: s.id, type: s.type, vertices: s.vertices.map((p) => ({ ...p })) }),
+    }));
 }
 
 // Rotate geodetic unit directions together, then project back to WGS84 at height 0.

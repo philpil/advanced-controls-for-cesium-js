@@ -7,11 +7,19 @@
   "scripts": {
     "start": "python3 -m http.server 8080 --directory dist",
     "test": "node --test tests/*.test.js",
-    "check": "node --check dist/app.js && node --check dist/geometry.js",
-    "format": "prettier --write \"dist/**/*.{js,html,css}\" \"tests/**/*.js\" package.json .prettierrc.json README.md",
-    "format:check": "prettier --check \"dist/**/*.{js,html,css}\" \"tests/**/*.js\" package.json .prettierrc.json README.md"
+    "check": "node --check dist/app.js && node --check dist/geometry.js && node --check dist/topology.js && node --check dist/history.js && node --check tests/browser-smoke.cjs",
+    "format": "prettier --write \"dist/**/*.{js,html,css}\" \"tests/**/*.{js,cjs}\" \"scripts/**/*.js\" package.json .prettierrc.json README.md",
+    "format:check": "prettier --check \"dist/**/*.{js,html,css}\" \"tests/**/*.{js,cjs}\" \"scripts/**/*.js\" package.json .prettierrc.json README.md",
+    "build:vendor": "esbuild scripts/vendor-entry.js --bundle --format=esm --platform=browser --outfile=dist/vendor/geographic-tools.js && prettier --write dist/vendor/geographic-tools.js",
+    "test:browser": "node tests/browser-smoke.cjs"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.62.1",
     "prettier": "3.6.2"
+  },
+  "dependencies": {
+    "geographiclib-geodesic": "2.2.0",
+    "polygon-clipping": "0.15.7"
   }
 }

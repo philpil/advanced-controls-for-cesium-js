@@ -134,6 +134,8 @@ function harness(hitKind = 'shape') {
     addEventListener() {},
     getElement: element,
     mode: 'select',
+    multiSelect: false,
+    mergeSelected() {},
     gesture: null,
     drag: null,
     selected: 'a',

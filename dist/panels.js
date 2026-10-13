@@ -58,6 +58,27 @@ export function bindMovablePanels(panels, surface = window) {
   };
   for (const state of states) {
     const { panel, grip } = state;
+    const minimise = panel.querySelector('[data-panel-minimise]');
+    const body = panel.querySelector('.panel-body');
+    if (minimise && body) {
+      const expandedLabel = minimise.getAttribute('aria-label');
+      minimise.addEventListener('click', () => {
+        // Only collapse UI: selected shapes and Cesium editing handles are untouched.
+        const rect = panel.getBoundingClientRect();
+        finish(state);
+        body.hidden = !body.hidden;
+        panel.classList.toggle('panel-minimised', body.hidden);
+        minimise.setAttribute('aria-expanded', String(!body.hidden));
+        minimise.setAttribute(
+          'aria-label',
+          body.hidden ? expandedLabel.replace('Minimise', 'Restore') : expandedLabel,
+        );
+        minimise.title = body.hidden ? 'Restore panel' : 'Minimise panel';
+        minimise.textContent = body.hidden ? '+' : '−';
+        // Keep the header in place, including bottom-anchored phone panels.
+        place(state, { left: rect.left, top: rect.top });
+      });
+    }
     grip.addEventListener('pointerdown', (event) => {
       if (event.isPrimary === false || event.button !== 0) return;
       const rect = panel.getBoundingClientRect();

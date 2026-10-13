@@ -83,36 +83,49 @@
           </svg>
           <span id="shapeType">CIRCLE</span>
         </button>
+        <button
+          type="button"
+          class="panel-minimise"
+          data-panel-minimise
+          aria-expanded="true"
+          aria-controls="inspectorBody"
+          aria-label="Minimise shape panel"
+          title="Minimise panel"
+        >
+          −
+        </button>
         <button id="closeInspector" aria-label="Deselect shape">×</button>
       </div>
-      <h1 id="shapeName">Circle 01</h1>
-      <form id="nameForm">
-        <label for="nameInput">Shape name</label>
-        <div class="name-controls">
-          <input id="nameInput" type="text" maxlength="80" required autocomplete="off" />
-          <button type="submit">Rename</button>
+      <div id="inspectorBody" class="panel-body">
+        <h1 id="shapeName">Circle 01</h1>
+        <form id="nameForm">
+          <label for="nameInput">Shape name</label>
+          <div class="name-controls">
+            <input id="nameInput" type="text" maxlength="80" required autocomplete="off" />
+            <button type="submit">Rename</button>
+          </div>
+        </form>
+        <div id="circleFields">
+          <label for="radiusInput">Radius <span>km</span></label>
+          <input id="radiusInput" type="number" min="0.01" max="5000" step="0.1" />
+          <div class="data-row">
+            <span>Centre</span>
+            <span id="centreValue"></span>
+          </div>
         </div>
-      </form>
-      <div id="circleFields">
-        <label for="radiusInput">Radius <span>km</span></label>
-        <input id="radiusInput" type="number" min="0.01" max="5000" step="0.1" />
-        <div class="data-row">
-          <span>Centre</span>
-          <span id="centreValue"></span>
+        <div id="polygonFields" hidden>
+          <div class="data-row">
+            <span>Vertices</span>
+            <strong id="vertexCount">3</strong>
+          </div>
+          <p>
+            Drag the gold MOVE handle near the centre to move the whole shape. Solid handles move
+            vertices; hollow handles add vertices.
+          </p>
         </div>
-      </div>
-      <div id="polygonFields" hidden>
-        <div class="data-row">
-          <span>Vertices</span>
-          <strong id="vertexCount">3</strong>
+        <div class="inspector-actions">
+          <button id="deleteShape">Delete shape <kbd>⌫</kbd></button>
         </div>
-        <p>
-          Drag the gold MOVE handle near the centre to move the whole shape. Solid handles move
-          vertices; hollow handles add vertices.
-        </p>
-      </div>
-      <div class="inspector-actions">
-        <button id="deleteShape">Delete shape <kbd>⌫</kbd></button>
       </div>
     </aside>
     <aside id="multiSelection" class="selection-panel" hidden aria-label="Multiple selected shapes">
@@ -129,13 +142,26 @@
           </svg>
           <span>MULTIPLE SELECTION</span>
         </button>
+        <button
+          type="button"
+          class="panel-minimise"
+          data-panel-minimise
+          aria-expanded="true"
+          aria-controls="multiSelectionBody"
+          aria-label="Minimise multi-selection panel"
+          title="Minimise panel"
+        >
+          −
+        </button>
         <button id="clearSelection" aria-label="Clear selection">×</button>
       </div>
-      <h1 id="selectionCount">2 shapes selected</h1>
-      <p>Select exactly two overlapping or edge-sharing shapes to merge into one polygon.</p>
-      <button id="mergeShapes" class="panel-button">Merge into polygon</button>
-      <button id="deleteSelection" class="panel-button danger">Delete selected shapes</button>
-      <p>Undo restores the original shapes after a merge or deletion.</p>
+      <div id="multiSelectionBody" class="panel-body">
+        <h1 id="selectionCount">2 shapes selected</h1>
+        <p>Select exactly two overlapping or edge-sharing shapes to merge into one polygon.</p>
+        <button id="mergeShapes" class="panel-button">Merge into polygon</button>
+        <button id="deleteSelection" class="panel-button danger">Delete selected shapes</button>
+        <p>Undo restores the original shapes after a merge or deletion.</p>
+      </div>
     </aside>
     <div id="drawing" hidden>
       <span><i></i> DRAWING POLYGON</span>

@@ -771,3 +771,18 @@ dialog dd {
 .panel-dragging .panel-grip {
   cursor: grabbing;
 }
+
+/* Minimise the UI without deselecting shapes or hiding their edit handles. */
+#inspector.panel-minimised,
+.selection-panel.panel-minimised {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.panel-header .panel-minimise {
+  min-width: 32px;
+  min-height: 44px;
+  padding: 0;
+}
+.panel-header .panel-grip {
+  letter-spacing: 1px;
+}

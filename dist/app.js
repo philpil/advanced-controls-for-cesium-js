@@ -30,6 +30,8 @@ import {
 } from './geometry.js';
 import { polygonProblem, mergeVertices } from './topology.js';
 import { createHistory } from './history.js';
+import { bindMovablePanels } from './panels.js';
+let reflowPanels = () => {};
 const history = createHistory();
 const selectedIds = new Set();
 let multiSelect = false;
@@ -638,6 +640,7 @@ function updateUI() {
         `${Cesium.Math.toDegrees(s.center.lat).toFixed(3)}°, ${Cesium.Math.toDegrees(s.center.lon).toFixed(3)}°`;
     } else getElement('vertexCount').textContent = s.vertices.length;
   }
+  reflowPanels();
   viewer.canvas.style.cursor = mode === 'select' ? 'grab' : 'crosshair';
 }
 /**
@@ -976,6 +979,7 @@ function handlePointerUp(e) {
  * @returns {void}
  */
 function bind() {
+  reflowPanels = bindMovablePanels(['inspector', 'multiSelection'].map(getElement));
   const canvas = viewer.canvas;
   canvas.style.touchAction = 'none';
   canvas.tabIndex = 0;

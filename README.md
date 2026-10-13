@@ -81,3 +81,7 @@ Validation samples WGS 84 geodesics to a 25cm projected chord tolerance and chec
 ## Undo and redo
 
 Use the **Undo / Redo** buttons, **Ctrl/Cmd+Z**, or **Ctrl/Cmd+Shift+Z** (**Ctrl/Cmd+Y** also redoes). Creation, renaming, radius changes, completed drags, midpoint insertion, merge and deletion are recorded. A drag is one edit; a midpoint insertion plus its drag is one edit. Rejected edits do not create a history entry. Undoing a merge restores both originals with their names. Up to 50 edits are retained in memory; reloading starts a fresh history while retaining saved shapes. Finish or cancel a draft before undoing completed shapes. Drafts continue to use **Undo point**.
+
+## Movable inspector panels
+
+Drag the grip/title at the top of the shape inspector or multi-selection panel to move it out of the way with a mouse or finger. Each panel retains its own position for the page session, including when changing selections. Fields, Rename, Merge, Delete and × remain normal controls. Panels stay inside the visible screen when dragged, resized or rotated; tall panels scroll internally. Keyboard users can focus the header grip and use arrow keys (16px steps), Shift+arrows (64px), or Home to return to the default responsive position.

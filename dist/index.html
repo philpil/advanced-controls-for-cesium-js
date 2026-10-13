@@ -70,8 +70,19 @@
       <button id="redoEdit" disabled title="Redo (Ctrl/Cmd+Shift+Z)">↷ Redo</button>
     </div>
     <aside id="inspector" hidden>
-      <div class="eyebrow">
-        <span id="shapeType">CIRCLE</span>
+      <div class="eyebrow panel-header">
+        <button
+          type="button"
+          class="panel-grip"
+          data-panel-drag
+          aria-label="Move shape panel. Drag or use arrow keys. Home resets position."
+          title="Drag to move · Arrow keys to move · Home to reset"
+        >
+          <svg viewBox="0 0 12 18" aria-hidden="true">
+            <path d="M3 3h1M8 3h1M3 9h1M8 9h1M3 15h1M8 15h1" />
+          </svg>
+          <span id="shapeType">CIRCLE</span>
+        </button>
         <button id="closeInspector" aria-label="Deselect shape">×</button>
       </div>
       <h1 id="shapeName">Circle 01</h1>
@@ -105,8 +116,20 @@
       </div>
     </aside>
     <aside id="multiSelection" class="selection-panel" hidden aria-label="Multiple selected shapes">
-      <div class="eyebrow">
-        MULTIPLE SELECTION <button id="clearSelection" aria-label="Clear selection">×</button>
+      <div class="eyebrow panel-header">
+        <button
+          type="button"
+          class="panel-grip"
+          data-panel-drag
+          aria-label="Move multi-selection panel. Drag or use arrow keys. Home resets position."
+          title="Drag to move · Arrow keys to move · Home to reset"
+        >
+          <svg viewBox="0 0 12 18" aria-hidden="true">
+            <path d="M3 3h1M8 3h1M3 9h1M8 9h1M3 15h1M8 15h1" />
+          </svg>
+          <span>MULTIPLE SELECTION</span>
+        </button>
+        <button id="clearSelection" aria-label="Clear selection">×</button>
       </div>
       <h1 id="selectionCount">2 shapes selected</h1>
       <p>Select exactly two overlapping or edge-sharing shapes to merge into one polygon.</p>

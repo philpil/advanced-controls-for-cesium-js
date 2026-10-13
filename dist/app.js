@@ -555,18 +555,6 @@ function moveHandle(shape) {
         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
         disableDepthTestDistance: 0,
       },
-      label: {
-        text: 'MOVE',
-        font: '700 11px sans-serif',
-        fillColor: Cesium.Color.fromCssColorString(themePalette.moveText),
-        outlineColor: Cesium.Color.fromCssColorString(themePalette.moveOutline),
-        outlineWidth: 2,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(-14, 0),
-        horizontalOrigin: Cesium.HorizontalOrigin.RIGHT,
-        verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      },
     },
     { kind: shape.type === 'circle' ? 'center' : 'polygonMove', id: shape.id, point },
   );

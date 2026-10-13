@@ -6,16 +6,12 @@ export const THEMES = {
     labelText: '#ffffff',
     labelBackground: '#111820',
     labelOutline: '#111820',
-    moveText: '#fff1ca',
-    moveOutline: '#111820',
   },
   light: {
     sky: '#dce9f2',
     labelText: '#17222c',
     labelBackground: '#ffffff',
     labelOutline: '#ffffff',
-    moveText: '#4e3200',
-    moveOutline: '#ffffff',
   },
 };
 /**

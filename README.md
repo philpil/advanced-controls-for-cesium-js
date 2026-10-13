@@ -92,7 +92,7 @@ Use **−** in either panel header to minimise it to a draggable title bar, and 
 
 The custom **Globe**, **Flat** and **2.5D** buttons call Cesium's native `morphTo3D`, `morphTo2D` and `morphToColumbusView` methods. Transitions are immediate; the active button follows the actual scene mode. Shapes, selections and minimised/dragged panels are retained. Existing drawing, selection and handles use the same geographic records in all views. An unfinished polygon must be finished or cancelled before switching; active edits are saved and camera flights cancelled before a mode change. The scene enables Cesium's 2D/Columbus support instead of `scene3DOnly`.
 
-Shape-name labels are anchored at height zero and clamped to the surface, with no upward screen offset. Their bottom-left corner sits at the geographic anchor. They remain camera-facing text for readability rather than text painted onto the terrain. The MOVE caption is placed beside its gold handle instead of above it.
+Shape-name labels are anchored at height zero and clamped to the surface, with no upward screen offset. Their bottom-left corner sits at the geographic anchor. They remain camera-facing text for readability rather than text painted onto the terrain. Gold movement handles have no text caption.
 
 ## Appearance
 

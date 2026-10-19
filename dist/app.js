@@ -105,6 +105,9 @@ const shapeName = (s) =>
   `${s.type === 'circle' ? 'Circle' : 'Polygon'} ${String(shapes.indexOf(s) + 1).padStart(2, '0')}`;
 /**
  * Projects a geographic point onto the WGS 84 surface at zero height.
+ * The viewer uses EllipsoidTerrainProvider: points and labels must keep this
+ * explicit surface position. Ground-clamped points can be reprojected incorrectly
+ * by Cesium when switching to 2D or Columbus View.
  * @param {GeoPoint} p Longitude/latitude in radians.
  * @returns {Cesium.Cartesian3} Earth-fixed position.
  */
@@ -496,7 +499,7 @@ function renderShape(s, isDraft = false) {
             pixelOffset: Cesium.Cartesian2.ZERO,
             horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            heightReference: Cesium.HeightReference.NONE,
             disableDepthTestDistance: 0,
           },
         },
@@ -530,7 +533,7 @@ function handlePoint(p, data, hollow = false) {
         color: Cesium.Color.fromCssColorString(hollow ? '#142921' : '#dbffed'),
         outlineColor: Cesium.Color.fromCssColorString(hollow ? '#adf0d0' : '#315b48'),
         outlineWidth: hollow ? 2 : 3,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        heightReference: Cesium.HeightReference.NONE,
         disableDepthTestDistance: 0,
       },
     },
@@ -552,7 +555,7 @@ function moveHandle(shape) {
         color: Cesium.Color.fromCssColorString('#ffcb70'),
         outlineColor: Cesium.Color.fromCssColorString('#6a4520'),
         outlineWidth: 3,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        heightReference: Cesium.HeightReference.NONE,
         disableDepthTestDistance: 0,
       },
     },

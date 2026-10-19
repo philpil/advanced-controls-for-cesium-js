@@ -51,7 +51,7 @@ const box = (x, y) => [p(x, y), p(x + 2, y), p(x + 2, y + 2), p(x, y + 2)];
       contentType: 'text/javascript',
       body:
         source +
-        `\nwindow.__qa={get shapes(){return shapes},get viewer(){return viewer},get selected(){return [...selectedIds]},get draft(){return draft},get visuals(){return visuals},get drag(){return drag},get history(){return history},select,setMode,addVertex,applyDrag,screen:(p)=>Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene,toCartesian(p))};`,
+        `\nwindow.__qa={get shapes(){return shapes},get viewer(){return viewer},get selected(){return [...selectedIds]},get draft(){return draft},get visuals(){return visuals},get handles(){return handles},get drag(){return drag},get history(){return history},select,setMode,addVertex,applyDrag,flyToShape,screen:(p)=>Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene,toCartesian(p))};`,
     }),
   );
   if (process.env.CESIUM_TEST_CESIUM_PATH)
@@ -179,9 +179,66 @@ const box = (x, y) => [p(x, y), p(x + 2, y), p(x + 2, y + 2), p(x, y + 2)];
     await page.screenshot({
       path: require('node:path').join(process.env.CESIUM_TEST_SCREENSHOTS, 'mobile-multi.png'),
     });
+  // Test rendered handle positions, not just entity coordinates: Cesium's ground
+  // clamping can project a point elsewhere in 2D/Columbus View after a morph.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(
+    (fixtures) => {
+      localStorage.setItem(
+        'cesium-advanced-controls-v1',
+        JSON.stringify({ version: 1, shapes: fixtures }),
+      );
+    },
+    [
+      {
+        id: 'circle-view',
+        type: 'circle',
+        name: 'View circle',
+        center: p(10, 40),
+        radius: 200000,
+        bearing: 1.2,
+      },
+      { id: 'polygon-view', type: 'polygon', name: 'View polygon', vertices: box(30, 40) },
+    ],
+  );
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(() => document.querySelector('#loading').hidden);
+  const savedGeometry = await page.evaluate(() => JSON.stringify(__qa.shapes));
+  for (const id of ['circle-view', 'polygon-view']) {
+    await page.evaluate((id) => __qa.select(id), id);
+    for (const button of [
+      'globeView',
+      'flatView',
+      'tiltedView',
+      'flatView',
+      'tiltedView',
+      'globeView',
+    ]) {
+      await page.locator(`#${button}`).click();
+      await page.evaluate((id) => __qa.flyToShape(id), id);
+      await page.waitForFunction(
+        () => {
+          const { viewer, handles } = __qa;
+          viewer.render();
+          return (
+            handles.length > 0 &&
+            handles.every((handle) => {
+              const position = handle.position.getValue(viewer.clock.currentTime);
+              const pixel = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, position);
+              return pixel && viewer.scene.drillPick(pixel).some((hit) => hit.id === handle);
+            })
+          );
+        },
+        null,
+        { timeout: 15000 },
+      );
+      assert.deepEqual(await page.evaluate(() => __qa.selected), [id]);
+      assert.equal(await page.evaluate(() => JSON.stringify(__qa.shapes)), savedGeometry);
+    }
+  }
   assert.deepEqual(errors, []);
   console.log(
-    'PASS: real Cesium labels, rename/save, touch multi-selection, merge, undo/redo, crossing vertex/midpoint drags and draft rejection; desktop/mobile layout; no page errors.',
+    'PASS: real Cesium labels, rename/save, touch multi-selection, merge, undo/redo, crossing vertex/midpoint drags and draft rejection; circle/polygon handle picking across repeated 3D/2D/Columbus transitions; desktop/mobile layout; no page errors.',
   );
   await browser.close();
   server.kill();
